@@ -1,0 +1,91 @@
+################################################################################
+# ==> Task Required for Configure Linux to host Oracle Database 12c
+# ==> Supports version 12.1.0.2
+################################################################################
+
+# ==> Configure Linux
+- name: Install required packages 
+  yum: name={{ item }} state=present
+  with_items: "{{ packages_list }}"
+  tags: packages
+  
+- name: disable SELinux
+  selinux:  state="{{ selinux_mode }}"
+  when: selinux_mode == "disabled"
+  tags: selinux
+
+- name: enable  SELinux with policy targeted 
+  selinux:  policy=targeted state="{{ selinux_mode }}"
+  when: selinux_mode != "disabled"
+  tags: selinux
+
+
+- name: Disable Firewall Deamon (firewalld)
+  service: name=firewalld state=stopped enabled=no
+
+- name: enable chrony service 
+  service: name=chronyd state=restarted enabled=yes
+  tags: chrony
+
+- name: enable Oracle tuned profile
+  command: "tuned-adm profile oracle"
+  tags: oracle_tuned
+
+- name: ensure tuned service is restarted and enabled
+  service: name=tuned.service state=restarted enabled=yes 
+  tags: oracle_tuned
+
+- name: configure systemd-logind with RemoveIPC=no 
+  template: backup=yes src=logindconf.j2 dest=/etc/systemd/logind.conf
+  tags: no_remove_ipc
+
+- name: ensure logind service is restarted and enable 
+  service: name=systemd-logind state=restarted enabled=yes
+
+- name: Create oinstall group
+  group: name={{ oracle_install_group }} state=present
+
+- name: add additional groups if needed for role separation
+  group: name={{ item }} state=present
+  with_items: "{{ extra_groups }}"
+
+- name: Create oracle user
+  user: name={{ oracle_user }} group={{ oracle_install_group }} password={{ oracle_os_user_pass }}
+
+- name: Add additional groups to oracle_user
+  user: name={{ oracle_user }} groups={{ item }} append=yes
+  with_items: "{{ extra_groups }}"
+
+- name: file /etc/security/limits.d/99-oracle-limits.conf
+  file: path=/etc/security/limits.d/99-oracle-limits.conf state=touch mode=600
+
+- name: Set oracle user limits
+  lineinfile: "dest=/etc/security/limits.d/99-oracle-limits.conf line='{{ oracle_user }} {{ item.limit }} {{ item.type}} {{ item.value }}'"
+  with_items:
+    - { limit: 'soft', type: nofile, value: '{{ soft_no_file }}' }
+    - { limit: 'hard', type: nofile, value: '{{ hard_no_file }}' }
+    - { limit: 'soft', type: nproc, value: '{{ soft_nproc }}' }
+    - { limit: 'hard', type: nproc, value: '{{ hard_nproc }}' }
+    - { limit: 'soft', type: stack, value: '{{ soft_stack }}' }
+    - { limit: 'hard', type: stack, value: '{{ hard_stack }}' }
+    - { limit: 'soft', type: memlock, value: '{{ soft_memlock }}' }
+    - { limit: 'hard', type: memlock, value: '{{ hard_memlock }}' }
+
+
+- name: Create Oracle directory
+  with_items: "{{ oracle_directories }}"
+  file: "state=directory path={{ item }} owner={{ oracle_user }} group={{ oracle_install_group }}"
+
+- name: Create TNS Admin directory outside ORACLE_HOME
+  file: "state=directory path={{ oracle_base }}/network/admin owner={{ oracle_user }} group={{ oracle_install_group }}"
+
+
+- name: Disable Transparent Hugepages (runtime)
+  shell: if test -f /sys/kernel/mm/transparent_hugepage/enabled; then echo never > /sys/kernel/mm/transparent_hugepage/enabled; fi;
+  tags: hugepages 
+
+- name: configure kernel for hugepages
+  sysctl: name="vm.nr_hugepages" value="{{ hugepages_nr }}" state=present
+  tags:
+    - hugepages
+

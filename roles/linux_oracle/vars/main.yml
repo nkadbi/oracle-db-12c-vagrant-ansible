@@ -1,0 +1,74 @@
+packages_list:
+  - "@base"
+  - "@core"
+  - binutils
+  - compat-libcap1
+  - compat-libstdc++-33
+  - gcc
+  - gcc-c++
+  - glibc
+  - glibc-devel
+  - ksh
+  - libgcc
+  - libstdc++
+  - libstdc++-devel
+  - libaio
+  - libaio-devel
+  - libXext
+  - libXtst
+  - libX11
+  - libXau
+  - libxcb
+  - libXi
+  - make
+  - sysstat
+  - libXmu
+  - libXt
+  - libXv
+  - libXxf86misc
+  - libXxf86vm
+  - nfs-utils
+  - unzip
+  - tuned-profiles-oracle
+#  - xorg-x11-utils
+#  - xorg-x11-xauth
+
+kernel_params:
+# System default settings live in /usr/lib/sysctl.d/00-system.conf.
+# To override those settings, enter new settings here, or in an /etc/sysctl.d/<name>.conf file
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+  vm.swappiness: 10
+  vm.dirty_background_ratio: 3
+  vm.dirty_ratio: 80
+  vm.dirty_expire_centisecs:  500
+  vm.dirty_writeback_centisecs: 100
+# If intending to set SGA_MAX_SIZE to a value larger than 4 GB, set SHMMAX to a size
+# in bytes larger than the SGA_MAX_SIZE. If in doubt on how to properly set SHMMAX , a value of
+# 4398046511104 (4 TB) can be used.
+  kernel.shmmax: 4398046511104
+# shmall is the maximum of total ammount of shared memory pages ; shmall = shmmax / PAGE_SIZE  
+  kernel.shmall:  1073741824
+# shmmni is the maximum total amount of shared memory segments
+  kernel.shmmni:  4096
+  kernel.sem:  250 32000 100 128
+# fs.file-max needs to be set to at least 6815744 for Oracle Installation. 
+  fs.file-max:  6815744
+  fs.aio-max-nr:  1048576
+  net.ipv4.ip_local_port_range:  9000 65500
+  net.core.rmem_default:  262144
+  net.core.rmem_max:  4194304
+  net.core.wmem_default:  262144
+  net.core.wmem_max:  1048576
+  kernel.panic_on_oops:  1
+  
+# Oracle user limits
+soft_nproc: 2047
+hard_nproc: 16384
+soft_no_file: 1024
+hard_no_file: 65536
+soft_stack: 10240
+hard_stack: 32768
+soft_memlock: 1887437
+hard_memlock: 1887437
+
+

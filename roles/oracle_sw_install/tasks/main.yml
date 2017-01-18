@@ -1,0 +1,38 @@
+- name: Check if ORACLE HOME is already installed
+  stat: 
+    path: "{{ oracle_home }}"
+  register: orah
+  tags: check_db_sw_installed
+
+- debug: 
+    msg: oracle_home already exists is {{ orah.stat.exists }}
+  tags: check_db_sw_installed
+  
+- name: Create folder for installation files
+  file: state=directory path={{ installation_folder }}
+
+- name: Copy and unzip Oracle Software files 
+  unarchive: src={{ item }} dest='{{ installation_folder }}/'
+  with_items: '{{ installer_archives }}'
+  when: not orah.stat.exists
+  tags: check_db_sw_installed
+
+- name: Gerenerate the response file for software only installation
+  template: src=db_install.rsp.j2 dest={{ installation_folder }}/db_install.rsp
+  when: not orah.stat.exists
+
+- name: Install Oracle Software
+  when: not orah.stat.exists
+  command: '{{ installation_folder}}/database/runInstaller -silent -ignorePrereq -ignoreSysPrereqs -waitforcompletion -responseFile {{ installation_folder }}/db_install.rsp'
+  register: db_sw_installed
+
+- name: Execute orainstRoot.sh as root
+  command: '{{ inventory_location }}/orainstRoot.sh'
+  become_user: root
+  when: db_sw_installed|success
+
+- name: Execute root.sh as root 
+  command: '{{ oracle_home }}/root.sh'
+  become_user: root
+  when: db_sw_installed|success
+

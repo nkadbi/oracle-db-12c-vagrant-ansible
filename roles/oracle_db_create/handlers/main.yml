@@ -1,0 +1,22 @@
+---   
+- name: activate grub-config
+  shell: 'grub2-mkconfig -o /boot/grub2/grub.cfg'
+
+- name: reload systemd  # -> to be tested in future : ansible version 2.2. has a new core module systemd
+  become_user: root
+  command: systemctl daemon-reload
+
+- name: enable dbora.service
+  become_user: root
+  command: systemctl enable dbora.service
+
+- name: check_pmon 
+  shell: "ps -ef |grep pmon |grep -v grep | wc -l"
+  tags:
+    - check_pmon
+  register: psout
+  ignore_errors: true
+
+- name: debug_pmon
+  debug:  msg=" count pmon processes is '{{ psout.stdout }}' "
+

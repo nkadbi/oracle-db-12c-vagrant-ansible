@@ -1,0 +1,21 @@
+oracle_database_type: 'GENERAL_PURPOSE'
+oracle_globalname: 'db2.private'
+oracle_sid: 'db2'
+create_container_database: 'true'
+number_of_pdbs: '1'
+oracle_conf_as_container_db: 'true'
+pdb_prefix: 'pdb'
+oracle_pdb_name: 'pdb1'
+oracle_charset: 'AL32UTF8'
+oracle_memory_option: 'false'
+# memory target
+oracle_memory_mb: 1536
+oracle_install_samples: 'false'
+oracle_management_option: 'DEFAULT'
+oracle_enable_recovery: 'true'
+oracle_storage_type: 'FILE_SYSTEM_STORAGE'
+oracle_dataloc: '{{ oracle_data }}'
+oracle_recoveryloc: '{{ oracle_fra }}'
+oracle_decline_security_updates: 'true'
+
+hugepages_nr: 578 

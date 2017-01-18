@@ -1,0 +1,191 @@
+################################################################################
+# ==> Tasks for oracle_db_create role. This role installs the Oracle Database
+################################################################################
+
+# Skip db create tasks if SID found in /etc/oratab
+- name: Check if database already in oratab
+  shell: grep "{{ oracle_sid }}:" /etc/oratab | wc -l
+  ignore_errors: True
+  register: check_db_already_exist
+
+#- debug: msg="check_db_already_exist.stdout is {{ check_db_already_exist.stdout }} "
+
+- name: copy listener response file
+  template: src=netca.rsp.j2 dest={{ installation_folder }}/netca.rsp
+
+- name: Create listener using netca
+  command: "{{ oracle_home }}/bin/netca -silent -responseFile {{ installation_folder }}/netca.rsp"
+
+- name: copy response file for dbca
+  template: src=dbca.rsp.j2 dest={{ installation_folder }}/dbca.rsp
+  when: check_db_already_exist.stdout == "0"
+
+- name: create database via dbca
+  command: "{{ oracle_home }}/bin/dbca -silent -createDatabase -responseFile {{ installation_folder }}/dbca.rsp"
+  when: check_db_already_exist.stdout == "0"
+  register: created_db
+
+- name: change oratab to :Y 
+  lineinfile: state=present dest=/etc/oratab regexp='^{{ oracle_sid }}:{{ oracle_home }}:(\w(?!Y))' line='{{ oracle_sid }}:{{ oracle_home }}:Y'
+  become_user: root
+  tags: oratab=y
+
+- name:  if dbi Database Management Kit is not installed adapt minimal environment profile  # http://www.dbi-services.com/offering/products/database-management-kit-dmk/
+  template: src=oracle_profile.j2 dest="~/.bash_profile" owner={{ oracle_user }} group={{ oracle_install_group }} mode=775 backup=yes
+  tags: dmk
+
+- name: Copy script to create trigger for autostart pluggable db's
+  copy: src=start-pluggable-dbs.sh dest={{ installation_folder }}/ mode=755
+  tags:
+    - start-pluggable
+
+- name: Create startup trigger to start PDBs with CDB
+  shell: "{{ installation_folder }}/start-pluggable-dbs.sh {{ oracle_sid }}"
+  when: create_container_database == "true" and number_of_pdbs > 0
+  tags:
+    - start-pluggable
+
+- name: copy systemd ora service template  into /etc/systemd/system/dbora.service
+  template: src=oradb_service.j2  dest=/etc/systemd/system/dbora.service mode=664
+  become_user: root
+  tags: dbora.service
+  notify:
+    - reload systemd
+    - enable dbora.service
+
+- name: stop dbora.service
+  become_user: root
+  command: systemctl stop dbora.service
+  tags: stop dbora.service
+  notify: 
+       - check_pmon
+       - debug_pmon
+
+# TNS_ADMIN FILES
+- name: check listener.ora in  TNS_ADMIN 
+  stat: path="{{ oracle_home }}/network/admin/listener.ora"
+  register: listener_ora 
+  tags: tns_admin
+
+- debug:
+    msg: "Path exists and is a symlink {{ oracle_home }}/network/admin/listener.ora"
+  when: listener_ora.stat.islnk is defined and listener_ora.stat.islnk
+  tags: tns_admin
+
+- debug:
+    msg: "Path exists and isn't a symlink {{ oracle_home }}/network/admin/listener.ora"
+  when: listener_ora.stat.islnk is defined and listener_ora.stat.islnk == False
+  tags: tns_admin
+
+- name: move Network Files to TNS_ADMIN directory
+  shell: "mv {{ oracle_home }}/network/admin/listener.ora {{ oracle_base }}/network/admin"
+  when: listener_ora.stat.islnk is defined and listener_ora.stat.islnk == False
+  tags: tns_admin
+
+- name: create symlink for listener.ora
+  file: state=link src="{{ oracle_base }}/network/admin/listener.ora"  dest="{{ oracle_home }}/network/admin/listener.ora"
+  tags: tns_admin
+  when: listener_ora.stat.islnk is defined and listener_ora.stat.islnk == False
+  ignore_errors: True
+
+- name: check sqlnet.ora in  TNS_ADMIN
+  stat: path="{{ oracle_home }}/network/admin/sqlnet.ora"
+  register: sqlnet
+  tags: tns_admin
+
+- debug:
+    msg: "Path exists and is a symlink {{ oracle_home }}/network/admin/sqlnet.ora"
+  when: sqlnet.stat.islnk is defined and sqlnet.stat.islnk
+  tags: tns_admin
+
+- debug:
+    msg: "Path exists and isn't a symlink {{ oracle_home }}/network/admin/sqlnet.ora"
+  when: sqlnet.stat.islnk is defined and sqlnet.stat.islnk == False
+  tags: tns_admin
+
+- name: move Network Files to TNS_ADMIN directory
+  shell: "mv {{ oracle_home }}/network/admin/sqlnet.ora {{ oracle_base }}/network/admin"
+  when: sqlnet.stat.islnk is defined and sqlnet.stat.islnk == False
+  tags: tns_admin
+
+- name: create symlink for sqlnet.ora
+  file: state=link src="{{ oracle_base }}/network/admin/sqlnet.ora"  dest="{{ oracle_home }}/network/admin/sqlnet.ora"
+  tags: tns_admin
+  when: sqlnet.stat.islnk is defined and sqlnet.stat.islnk == False
+
+#---
+- name: check link to spfile in  $ORACLE_BASE/admin/<SID> exists
+  stat: path="{{ oracle_home }}/dbs/spfile{{ oracle_sid }}.ora"
+  register: spfile
+  tags: dbs_links
+
+- name: move $ORACLE_HOME/dbs/spfile.ora files to $ORACLE_BASE/admin/<SID>/pfile
+  shell: "mv {{ oracle_home }}/dbs/spfile{{ oracle_sid }}.ora {{ oracle_base }}/admin/{{ oracle_sid }}/pfile"
+  tags: dbs_links
+  when: spfile.stat.islnk is defined and spfile.stat.islnk == False
+
+- name: create symlink for spfile.ora
+  file: state=link src="{{ oracle_base }}/admin/{{ oracle_sid }}/pfile/spfile{{ oracle_sid }}.ora"  dest="{{ oracle_home }}/dbs/spfile{{ oracle_sid }}.ora"
+  when: spfile.stat.islnk is defined and spfile.stat.islnk == False 
+  tags: dbs_links
+
+- name: check link to  passwordfile in $ORACLE_BASE/admin/<SID> exists
+  stat: path="{{ oracle_home }}/dbs/orapw{{ oracle_sid }}" 
+  register: pwfile 
+  tags: dbs_links
+
+- name: move passwordfile into $ORACLE_BASE/admin/<SID>  
+  shell: ' mv {{ oracle_home }}/dbs/orapw{{ oracle_sid }} {{ oracle_base }}/admin/{{ oracle_sid }}/pfile'
+  tags: dbs_links
+  when: pwfile.stat.islnk is defined and pwfile.stat.islnk == False
+
+- name: create symlink for passwordfile
+  file: state=link src="{{ oracle_base }}/admin/{{ oracle_sid }}/pfile/orapw{{ oracle_sid }}" dest="{{ oracle_home }}/dbs/orapw{{ oracle_sid }}"
+  when: pwfile.stat.islnk is defined and pwfile.stat.islnk == False
+  tags: dbs_links
+
+- name: start dbora.service
+  become_user: root
+  command: systemctl start dbora.service
+  tags: start dbora.service   
+  notify: 
+      - check_pmon
+      - debug_pmon
+
+
+- name: copy hugepages.sh script
+  copy: src=huge_pages_settings.sh dest={{ installation_folder }}/ mode=755
+  tags: hugepages
+
+- name: run hugepages.sh with running db to get best values for hugepages and memlock
+  shell: '{{ installation_folder}}/huge_pages_settings.sh '
+  become_user: root
+  register: hugepages_from_script
+  notify: 
+       - check_pmon
+       - debug_pmon
+  tags: hugepages
+
+- name: get actual hugepages
+  shell: " cat /proc/meminfo | grep -i hugepages_total | awk ' { print $2 } ' "
+  register: hugepages_actual
+  tags: hugepages
+
+- name: show optimized parameter for hugepages
+  debug: msg="'{{ hugepages_from_script.stdout }} is the optimized value, actual found {{ hugepages_actual.stdout }}, be sure to check while DBs are db running '"
+  tags: hugepages
+  when: ' "{{ hugepages_actual.stdout }}" != " {{ hugepages_from_script.stdout }}" '
+
+# ==> disable transparent hugepages and set value for hugepage persistently across reboots in /etc/default/grub  
+#regexp test tool  => https://regex101.com/
+- name: configure startup with hugepages and transparent hugepages off in grub 
+  become_user: root
+  lineinfile: dest=/etc/default/grub
+            backup=True
+            backrefs=True
+            state=present
+            regexp='(^GRUB_CMDLINE_LINUX="(?!numa=off transparent_hugepage=never hugepages=\d+))([\s\S]+"$)'
+            line='\1numa=off transparent_hugepage=never hugepages={{ hugepages_from_script.stdout }} \2'
+  tags: hugepages
+  notify: activate grub-config
+

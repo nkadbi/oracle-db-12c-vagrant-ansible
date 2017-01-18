@@ -1,0 +1,4 @@
+install_db: INSTALL_DB_SWONLY
+oracle_hostname: '{{ ansible_fqdn }}'
+inventory_os_group: '{{ oracle_install_group }}'
+inventory_location: '{{ oracle_base }}/inventory'

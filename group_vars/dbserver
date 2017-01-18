@@ -1,0 +1,40 @@
+selinux_mode: permissive 	# please chose: |   disabled | permissive | enforcing
+
+oracle_user: oracle
+oracle_install_group: oinstall
+extra_groups:
+  - dba 
+
+oracle_base: /u01/app/oracle
+oracle_data: /u02/oradata
+oracle_fra: /u98/fra
+
+# adding additional disks -> look in Vagrantfile
+# list of oracle directories which will be created  in role/linux_oracle
+oracle_directories:
+ -  "{{ oracle_base }}"
+ -  "{{ oracle_data }}"
+ -  "{{ oracle_fra }}"
+
+
+# You have to provide the  ORACLE SOFTWARE zip files in my-ora-ansible-proj
+installer_archives:
+  - 'linuxamd64_12102_database_1of2.zip'
+  - 'linuxamd64_12102_database_2of2.zip'
+
+installation_folder: '{{ oracle_base}}/installation'
+
+# ORACLE_HOMES Naming Convention
+#example for CDB ORACLE_HOME  to be able to unplug from ORACLE_HOME 12.1.0.1.1-> plug to ORACLE_HOME 12.1.0.1.2:
+#                /u01/app/oracle/product/12.1.0/db_1_2:           Oracle home directories for Oracle Database 12.1.0.1.2
+#                /u01/app/oracle/product/12.1.0/db_2_1:           Oracle home directories for Oracle Database 12.1.0.2.1
+db_release: '12.1.0'
+dbhome_name: 'db_2_1'
+oracle_home: '{{ oracle_base }}/product/{{ db_release }}/{{ dbhome_name }}'
+
+
+oracle_edition: 'EE'
+oracle_dba_group: dba
+oracle_oper_group: dba
+
+

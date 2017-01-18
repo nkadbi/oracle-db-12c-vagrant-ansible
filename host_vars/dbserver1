@@ -1,0 +1,22 @@
+oracle_database_type: 'GENERAL_PURPOSE'
+oracle_globalname: 'db1.private'
+oracle_sid: 'db1'
+create_container_database: 'false'
+number_of_pdbs: '0'
+oracle_conf_as_container_db: 'false'
+pdb_prefix: 'pdb'
+oracle_pdb_name: 'pdb'
+oracle_charset: 'AL32UTF8'
+oracle_memory_option: 'false'
+# memory target
+oracle_memory_mb: 1536
+oracle_install_samples: 'false'
+oracle_management_option: 'DEFAULT'
+oracle_enable_recovery: 'true'
+oracle_storage_type: 'FILE_SYSTEM_STORAGE'
+oracle_dataloc: '{{ oracle_data }}'
+oracle_recoveryloc: '{{ oracle_fra }}'
+oracle_decline_security_updates: 'true' 
+
+# Initial Value for Hugepages will be adjusted with running DB 
+hugepages_nr: 578  

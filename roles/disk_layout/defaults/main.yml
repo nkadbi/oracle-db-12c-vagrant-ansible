@@ -1,0 +1,6 @@
+  disks:    # Sets up filesystem on host. 
+      u02:
+        {mntp: /u02, device: /dev/sdb, vgname: vg_ora2, pvname: /dev/sdb1, lvname: lv_ora2, fstype: ext4}
+      u98:
+        {mntp: /u98, device: /dev/sdc, vgname: vg_ora98, pvname: /dev/sdc1, lvname: lv_ora98, fstype: ext4}
+

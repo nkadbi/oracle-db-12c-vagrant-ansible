@@ -1,0 +1,18 @@
+---
+- name: Configure Oracle Linux 7 with Oracle Database 12c
+  hosts: dbserver1,dbserver2 
+  become: True
+  vars_files:
+    # User Passwords hashed are stored here:
+    - secrets.yml
+
+  roles:
+    - role: disk_layout
+    - role: linux_oracle
+    - role: oracle_sw_install
+      become_user: '{{ oracle_user }}'
+    - role: oracle_db_create
+      become_user: '{{ oracle_user }}'
+
+
+

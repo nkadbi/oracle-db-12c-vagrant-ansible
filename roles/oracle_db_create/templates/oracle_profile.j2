@@ -1,0 +1,18 @@
+        ORACLE_BASE="{{ oracle_base }}"
+        export ORACLE_BASE
+        ORACLE_HOME="{{oracle_home}}"
+        export ORACLE_HOME
+        NLS_LANG=american_america.{{ oracle_charset }}
+        export NLS_LANG
+        SHLIB_PATH=$ORACLE_HOME/lib
+        export SHLIB_PATH
+        LD_LIBRARY_PATH=$ORACLE_HOME/lib
+        export LD_LIBRARY_PATH
+        ORACLE_SID={{ oracle_sid }}
+        export ORACLE_SID
+        export NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'
+
+
+
+export PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch:$PATH:$SQLPATH:$GG_HOME/
+

@@ -1,0 +1,33 @@
+---
+  - name: filesystem | Create partition and pv
+    ignore_errors: True
+    shell:  parted -a optimal {{ item.value.device }} "mklabel gpt mkpart primary 1 -1"; pvcreate {{ item.value.pvname }}
+    args:
+     creates: "{{ item.value.pvname }}"
+    with_dict:  " {{ disks }} "
+    tags: hostfs
+
+  - name: filesystem | Create vg
+    ignore_errors: True 
+    lvg: vg={{ item.value.vgname }} pvs={{ item.value.pvname }} state=present 
+    with_dict: " {{ disks }} " 
+    tags: hostfs
+
+
+  - name: filesystem | create lv
+    ignore_errors: True
+    lvol: vg={{ item.value.vgname }} lv={{ item.value.lvname }} size=100%FREE state=present shrink=no
+    with_dict: " {{ disks }} "
+    tags: hostfs
+
+  - name: filesystem | create fs
+    ignore_errors: True
+    filesystem: fstype={{ item.value.fstype }} dev=/dev/{{ item.value.vgname }}/{{ item.value.lvname }}
+    with_dict: " {{ disks }} "
+    tags: hostfs
+
+  - name: filesytem | mount dir
+    mount: name={{ item.value.mntp }} src=/dev/{{ item.value.vgname }}/{{ item.value.lvname }} dump=0 passno=0 fstype={{ item.value.fstype }} state=mounted opts=rw,noatime
+    with_dict: " {{ disks }} " 
+    tags: hostfs
+
