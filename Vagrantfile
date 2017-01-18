@@ -4,7 +4,7 @@
 Vagrant.configure(2) do |config|
 
   config.ssh.insert_key = false # Use the same insecure key provided from box for each machine
-  config.vm.box = "rvanider/centos72" 
+  config.vm.box = "boxcutter/centos72" 
   config.vm.box_check_update = false # do not check for updates  ( not recommended , just for demo )
   config.vm.boot_timeout = 700
   config.hostmanager.enabled = true
