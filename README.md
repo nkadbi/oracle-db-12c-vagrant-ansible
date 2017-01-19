@@ -11,6 +11,7 @@ Oracle Database 12.1.0.2
 
 
 ## Requirements
+Oracle VirtualBox
 
 Ansible  2.2.0.0, 
 
@@ -21,7 +22,7 @@ Network Connection
 Space Requirements:
 10 GB (including virtual disks and 2.6 GB for Oracle Binaries )
 
-Tested on LAPTOP with 16 GB RAM, LINUX Kernel 4.4.0-57, SSD Disks, 
+Tested on LAPTOP with 16 GB RAM, LINUX Kernel 4.4.0-57, SSD Disks, OracleVirtualBox 5.1.12, vagrant 1.8.5, ansible 2.2.0.0
 
 → takes about 20 minutes to bring up 2 virtual servers with installed DB
 
