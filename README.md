@@ -58,11 +58,9 @@ vagrant up
 connect to virtual server dbserver1
 ```ruby
 vagrant ssh dbserver1
+su - oracle  (password welcome1)
 ```
-or after user oracle has been created with ansible
-```ruby
-ssh oracle@192.168.56.31  (passwort welcome1 , hash in secrets.yml)
-```
+
 
 ## Cleanup
 Delete VM’s and virtual disks
