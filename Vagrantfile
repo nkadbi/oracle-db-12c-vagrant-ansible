@@ -33,7 +33,7 @@ Vagrant.configure(2) do |config|
       # we start provisioning only when all servers are up (i=N)
       if i == N
            config.vm.provision "ansible" do |ansible|  # vm.provisioning
-              ansible.verbose = "v"
+              #ansible.verbose = "v"
               ansible.playbook = "oracle-db.yml"
               ansible.groups = { "dbserver" => ["dbserver1","dbserver2"] }
               ansible.limit = 'all'
