@@ -11,7 +11,7 @@ Vagrant.configure(2) do |config|
   config.hostmanager.ignore_private_ip = false
    
    N = 2  
-   (1..2).each do |i| # do for each server i
+   (1..N).each do |i| # do for each server i
      config.vm.define "dbserver#{i}" do |config|  # do on node i
      config.vm.hostname = "dbserver#{i}"
      puts " dbserver#{i}  "
@@ -31,24 +31,14 @@ Vagrant.configure(2) do |config|
       # if you want to take advantage from ansible parallel execution 
       # look at www.vagrantup.com/docs/provisioning/ansible.html 
       # we start provisioning only when all servers are up (i=N)
-         if i == N
-              config.vm.provision "ansible" do |ansible|  # vm.provisioning
-                ansible.playbook = "oracle-db.yml"
-                ansible.inventory_path = "./hosts"
-                # when using an inventory file, the path to the private key must also be specified
-                # either  in the inventory file itself like:
-                # ansible_ssh_private_key_file=./.vagrant/machines/default/virtualbox/private_key
-                # or as argument:
-                #ansible.raw_arguments  = [
-                #  "--private-key=./.vagrant/machines/default/virtualbox/private_key"
-                #]
-                # Disable default limit to connect to all the machines
-                ansible.limit = 'all'
-                ansible.groups = {
-                   "group1" => ["dbserver"]
-                 }
-               end # end vm.provisioning 
-         end # end if
+      if i == N
+           config.vm.provision "ansible" do |ansible|  # vm.provisioning
+              ansible.verbose = "v"
+              ansible.playbook = "oracle-db.yml"
+              ansible.groups = { "dbserver" => ["dbserver1","dbserver2"] }
+              ansible.limit = 'all'
+            end # end vm.provisioning 
+      end # end if
 
      end # do on node i
    end # for each server i
