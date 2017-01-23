@@ -1,6 +1,6 @@
 ---
 - name: Configure Oracle Linux 7 with Oracle Database 12c
-  hosts: dbserver1,dbserver2 
+  hosts: dbserver
   become: True
   vars_files:
     # User Passwords hashed are stored here:
