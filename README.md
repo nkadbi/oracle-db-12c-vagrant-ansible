@@ -26,7 +26,8 @@ Tested on LAPTOP with 16 GB RAM, LINUX Kernel 4.4.0-57, SSD Disks, OracleVirtual
 
 → takes about 20 minutes to bring up 2 virtual servers with installed DB
 
-More Details in my blog: http://blog.dbi-services.com/vagrant-up-get-your-oracle-infrastructure-up-and-running/
+More Details in my blog: Part 1 http://blog.dbi-services.com/vagrant-up-get-your-oracle-infrastructure-up-and-running/
+and Part 2 http://blog.dbi-services.com/part2-vagrant-up-get-your-oracle-infrastructure-up-an-running/
 
 ## USAGE
 checkout from github
@@ -39,7 +40,7 @@ please copy Oracle software files into the download folder
 ```ruby
 linuxamd64_12102_database_1of2.zip
 linuxamd64_12102_database_2of2.zip
-```ruby
+```
 ## Custom variables
 you can adapt variables for your needs.
 
