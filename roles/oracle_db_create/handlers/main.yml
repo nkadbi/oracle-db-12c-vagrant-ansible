@@ -1,5 +1,6 @@
 ---   
 - name: activate grub-config
+  become_user: root
   shell: 'grub2-mkconfig -o /boot/grub2/grub.cfg'
 
 - name: reload systemd  # -> to be tested in future : ansible version 2.2. has a new core module systemd
